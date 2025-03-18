@@ -1,3 +1,4 @@
+from flask import Flask, render_template, request, redirect, url_for
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -9,9 +10,13 @@ import time
 import json
 import os
 
-# Global file name
-JSON_FILENAME = "tweets_data.json"
+# Initialize Flask app
+app = Flask(__name__)
 
+# File to store scraped tweets
+TWEETS_FILE = "tweets_data.json"
+
+# Function to scrape tweets from Nitter
 def scrape_nitter_hashtag(hashtag, duration=60):
     """Scrapes tweets for a given hashtag and stores them in a JSON file."""
     
@@ -42,7 +47,7 @@ def scrape_nitter_hashtag(hashtag, duration=60):
 
             # Scroll to load more tweets
             driver.find_element(By.TAG_NAME, "body").send_keys(Keys.END)
-            time.sleep(5)  # Allow time to load new tweets
+            time.sleep(1)  # Allow time to load new tweets
 
     except Exception as e:
         print("Error:", e)
@@ -51,8 +56,8 @@ def scrape_nitter_hashtag(hashtag, duration=60):
         driver.quit()
 
         # Load existing data if the file already exists
-        if os.path.exists(JSON_FILENAME):
-            with open(JSON_FILENAME, "r", encoding="utf-8") as json_file:
+        if os.path.exists(TWEETS_FILE):
+            with open(TWEETS_FILE, "r", encoding="utf-8") as json_file:
                 try:
                     existing_data = json.load(json_file)
                 except json.JSONDecodeError:
@@ -64,15 +69,47 @@ def scrape_nitter_hashtag(hashtag, duration=60):
         existing_data.extend(tweets_list)
 
         # Save updated data back to JSON file
-        with open(JSON_FILENAME, "w", encoding="utf-8") as json_file:
+        with open(TWEETS_FILE, "w", encoding="utf-8") as json_file:
             json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
 
-        print(f"✅ {len(tweets_list)} tweets added to {JSON_FILENAME}")
+        print(f"✅ {len(tweets_list)} tweets added to {TWEETS_FILE}")
+        return tweets_list
 
-# Loop to accept multiple hashtags
-while True:
-    hashtag = input("Enter a hashtag (or type 'exit' to stop): ").strip("#")
-    if hashtag.lower() == "exit":
-        print("🔹 Exiting... All tweets are stored in tweets_data.json")
-        break
-    scrape_nitter_hashtag(hashtag)
+# Home route (hashtag input page)
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        hashtag = request.form.get("hashtag")
+        if not hashtag:
+            return render_template("index.html", error="Hashtag is required")
+
+        # Scrape tweets for the given hashtag
+        tweets = scrape_nitter_hashtag(hashtag)
+        return redirect(url_for("results", hashtag=hashtag))
+
+    return render_template("index.html")
+
+# Results route (display scraped tweets)
+@app.route("/results")
+def results():
+    hashtag = request.args.get("hashtag")
+    if not hashtag:
+        return redirect(url_for("index"))
+
+    # Load scraped tweets from JSON file
+    if os.path.exists(TWEETS_FILE):
+        with open(TWEETS_FILE, "r", encoding="utf-8") as json_file:
+            try:
+                tweets_data = json.load(json_file)
+            except json.JSONDecodeError:
+                tweets_data = []
+    else:
+        tweets_data = []
+
+    # Filter tweets for the given hashtag
+    tweets = [tweet for tweet in tweets_data if tweet["hashtag"] == hashtag]
+    return render_template("results.html", hashtag=hashtag, tweets=tweets)
+
+# Run the Flask app
+if __name__ == "__main__":
+    app.run(debug=True)
