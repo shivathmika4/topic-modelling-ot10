@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results for #{{ hashtag }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Add custom styles for the scrollable container */
+        .scrollable-container {
+            max-height: 400px; /* Set a fixed height for the container */
+            overflow-y: auto; /* Enable vertical scrolling */
+            border: 1px solid #ccc; /* Optional: Add a border */
+            padding: 10px; /* Optional: Add padding */
+            margin-top: 20px; /* Optional: Add margin */
+        }
+        .tweet-item {
+            margin-bottom: 10px; /* Space between tweets */
+            padding: 10px; /* Padding for each tweet */
+            border-bottom: 1px solid #eee; /* Optional: Add a separator */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Results for #{{ hashtag }}</h1>
+        <a href="/">Back to Home</a>
+
+        <!-- Scrollable container for tweets -->
+        <div class="scrollable-container">
+            {% for tweet in tweets %}
+                <div class="tweet-item">
+                    {{ tweet.tweet }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
