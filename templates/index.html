@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hashtag Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Hashtag Scraper</h1>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form method="POST" action="/">
+            <label for="hashtag">Enter Hashtag:</label>
+            <input type="text" id="hashtag" name="hashtag" required>
+            <br>
+            <button type="submit">Scrape Tweets</button>
+        </form>
+    </div>
+</body>
+</html>
